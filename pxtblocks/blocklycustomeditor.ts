@@ -36,6 +36,10 @@ namespace pxt.blocks {
         registerFieldEditor('melody', pxtblockly.FieldCustomMelody);
         registerFieldEditor('soundeffect', pxtblockly.FieldSoundEffect);
         registerFieldEditor('autocomplete', pxtblockly.FieldAutoComplete);
+
+        // gb.override : add image label field
+        registerFieldEditor('label', pxtblockly.FieldImageLabel);
+
         if (pxt.appTarget.appTheme?.songEditor) {
             registerFieldEditor('musiceditor', pxtblockly.FieldMusicEditor);
         }
