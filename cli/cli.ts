@@ -1257,7 +1257,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // check size
     const maxSize = checkFileSize(opts.fileList);
-    if (maxSize > 30000000) // 30Mb max
+    if (maxSize > 300000000) // 30Mb max gb.override: no file size restrict pls
         U.userError(`file too big for upload`);
     pxt.log('');
 
