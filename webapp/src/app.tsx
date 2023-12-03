@@ -213,6 +213,11 @@ export class ProjectView
         this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
         this.initSimulatorMessageHandlers();
 
+        //# gb.override: Save file control hook and naming 
+        (window as any).saveProjectAsync = () => { this.saveProjectAsync() }
+        (window as any).app_tsx = this
+
+
         // add user hint IDs and callback to hint manager
         if (pxt.BrowserUtils.useOldTutorialLayout) this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
     }
@@ -1594,37 +1599,38 @@ export class ProjectView
             await workspace.syncAsync();
         }
 
-        if (tryCloudSync) {
-            // Try a quick cloud fetch. If it doesn't complete within X second(s),
-            // continue on.
-            const TIMEOUT_MS = 15000;
-            const timeoutStart = Util.nowSeconds();
-            let timedOut = false;
-            await Promise.race([
-                pxt.U.delay(TIMEOUT_MS)
-                    .then(() => {
-                        timedOut = true
-                    }),
-                cloud.syncAsync({ hdrs: [h], direction: "down" })
-                    .then(changes => {
-                        if (changes.length) {
-                            const elapsed = Util.nowSeconds() - timeoutStart;
-                            if (timedOut) {
-                                // We are too late; the editor has already been loaded.
-                                // Call the onChanges handler to update the editor.
-                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed })
-                                if (changes.some(header => header.id === h.id))
-                                    cloud.forceReloadForCloudSync()
-                            } else {
-                                // We're not too late, update the local var so that the
-                                // first load has the new info.
-                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
-                                h = workspace.getHeader(h.id)
-                            }
-                        }
-                    })
-            ]);
-        }
+        // #gb.override
+        // if (tryCloudSync) {
+        //     // Try a quick cloud fetch. If it doesn't complete within X second(s),
+        //     // continue on.
+        //     const TIMEOUT_MS = 15000;
+        //     const timeoutStart = Util.nowSeconds();
+        //     let timedOut = false;
+        //     await Promise.race([
+        //         pxt.U.delay(TIMEOUT_MS)
+        //             .then(() => {
+        //                 timedOut = true
+        //             }),
+        //         cloud.syncAsync({ hdrs: [h], direction: "down" })
+        //             .then(changes => {
+        //                 if (changes.length) {
+        //                     const elapsed = Util.nowSeconds() - timeoutStart;
+        //                     if (timedOut) {
+        //                         // We are too late; the editor has already been loaded.
+        //                         // Call the onChanges handler to update the editor.
+        //                         pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed })
+        //                         if (changes.some(header => header.id === h.id))
+        //                             cloud.forceReloadForCloudSync()
+        //                     } else {
+        //                         // We're not too late, update the local var so that the
+        //                         // first load has the new info.
+        //                         pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
+        //                         h = workspace.getHeader(h.id)
+        //                     }
+        //                 }
+        //             })
+        //     ]);
+        // }
 
         if (h) {
             workspace.acquireHeaderSession(h);
@@ -2235,6 +2241,16 @@ export class ProjectView
             })
     }
 
+    // gb.override
+    importGaraBlockFile(file: File, options?: pxt.editor.ImportFileOptions) {
+        if (!file) return;
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
+            .then(contents => {
+                (window as any).importGaraBlockFile({file, contents, options})
+            })
+    }
+
+
     importProjectFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
@@ -2546,6 +2562,13 @@ export class ProjectView
             this.importPNGFile(file, options);
         } else if (this.isZipFile(file.name)) {
             this.importZipFileAsync(file, options);
+        
+        // gb.override
+        } else if ((window as any).isGaraBlockFile(file.name)) {
+            //! GaraBlock: add support for custom file eextension
+            // (window as any).importGaraBlockFile(file);
+            this.importGaraBlockFile(file);
+         
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -5169,8 +5192,9 @@ export class ProjectView
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
-                {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
-                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
+                {/* gb.override wtf why this not working */}
+                {/* {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
+                    shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined} */}
                 {this.state.onboarding && <Tour tourSteps={this.state.onboarding} onClose={this.hideOnboarding} />}
             </div>
         );
