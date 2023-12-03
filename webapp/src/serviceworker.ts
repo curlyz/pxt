@@ -29,6 +29,9 @@ enum DisconnectResponse {
 
 initWebappServiceWorker();
 initWebUSB();
+//! gb.override : need to access usb for offline kit
+(window as any).initWebappServiceWorker = initWebappServiceWorker;
+(window as any).initWebUSB = initWebUSB;
 
 function initWebappServiceWorker() {
     // Empty string for released, otherwise contains the ref or version path
