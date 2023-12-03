@@ -373,7 +373,7 @@ namespace pxt.BrowserUtils {
             let byteString = atob(uri.split(',')[1]);
             let ia = Util.stringToUint8Array(byteString);
             let blob = new Blob([ia], { type: "img/png" });
-            window.navigator.msSaveOrOpenBlob(blob, name);
+            // window.navigator.msSaveOrOpenBlob(blob, name); //# gb.override
         } else {
             let link = <any>window.document.createElement('a');
             if (typeof link.download == "string") {
