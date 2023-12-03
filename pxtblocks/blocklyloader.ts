@@ -1225,7 +1225,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "TO",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         }
                     ],
                     "previousStatement": null,
@@ -1295,7 +1295,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "TO",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         }
                     ],
                     "previousStatement": null,
@@ -1950,7 +1950,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "INDEX",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         }
                     ],
                     "colour": pxt.toolbox.blockColors['arrays'],
@@ -1981,7 +1981,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "INDEX",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         },
                         {
                             "type": "input_value",
@@ -2021,12 +2021,12 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "x",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         },
                         {
                             "type": "input_value",
                             "name": "y",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         }
                     ],
                     "inputsInline": true,
@@ -2062,7 +2062,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "x",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         }
                     ],
                     "inputsInline": true,
@@ -2269,7 +2269,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "VALUE",
-                            "check": "Number"
+                            // "check": "Number" #gb.override
                         }
                     ],
                     "inputsInline": true,
