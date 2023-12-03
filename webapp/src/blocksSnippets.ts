@@ -738,15 +738,16 @@ export function allBuiltinBlocks() {
         })
     }
     // Add on start built in block
-    builtinBlockCache[ts.pxtc.ON_START_TYPE] = {
-        name: ts.pxtc.ON_START_TYPE,
-        attributes: {
-            blockId: ts.pxtc.ON_START_TYPE,
-            weight: pxt.appTarget.runtime.onStartWeight || 10,
-            group: pxt.appTarget.runtime.onStartGroup || undefined
-        },
-        blockXml: `<block type="pxt-on-start"></block>`
-    };
+    // gb.override remote this on start block
+    // builtinBlockCache[ts.pxtc.ON_START_TYPE] = {
+    //     name: ts.pxtc.ON_START_TYPE,
+    //     attributes: {
+    //         blockId: ts.pxtc.ON_START_TYPE,
+    //         weight: pxt.appTarget.runtime.onStartWeight || 10,
+    //         group: pxt.appTarget.runtime.onStartGroup || undefined
+    //     },
+    //     blockXml: `<block type="pxt-on-start"></block>`
+    // };
     // Add pause until built in block
     const pauseUntil = getPauseUntil();
     if (pauseUntil) {
