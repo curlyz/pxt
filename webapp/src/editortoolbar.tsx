@@ -23,6 +23,13 @@ const enum View {
 
 interface EditorToolbarState {
     compileState: "compiling" | "success" | null;
+    // gb.override
+    isInteractive: boolean,
+    sliderPosition: string,
+    isUpload: boolean,
+    textButton: string,
+    colorButton: "primary" | "secondary" | "red" | "yellow" | "olive" | "brown" | "grey" | "teal" | "purple" | "pink" | "blue" | "black" | "green"
+
 }
 
 export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarState> {
@@ -42,6 +49,19 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.toggleDebugging = this.toggleDebugging.bind(this);
         this.toggleCollapsed = this.toggleCollapsed.bind(this);
         this.cloudButtonClick = this.cloudButtonClick.bind(this);
+
+        // gb.override
+        this.setState({ sliderPosition: '0' });
+        (window as any).editorToolbar_tsx = this;
+        (window as any).setUploadButtonState = async (state: any) => {
+            if (state == 'connect') {
+                this.handleConnect()
+            }
+            if (state == 'upload') {
+                this.handleUpload()
+            }
+        }
+
     }
 
     saveProjectName(name: string, view?: string) {
@@ -69,6 +89,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.redo();
     }
+
+
+    question(view?: string) {
+        pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        this.props.parent.editor.redo();
+        console.log("question")
+    }
+
+
 
     zoomIn(view?: string) {
         pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
@@ -176,6 +205,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     protected getViewString(view: View): string {
         return view.toString().toLowerCase();
+    }
+
+    // gb.override : create the download toolbar
+    protected getIconbutton(view: View): JSX.Element[] {
+        return [
+            //! GaraBlock: Add download button
+            <EditorToolbarButton icon='download' className={`editortools-btn undo-editortools-btn`} onButtonClick={(window as any).handleDownloadButton} view={this.getViewString(view)} />,
+            <EditorToolbarButton icon='upload' className={`editortools-btn undo-editortools-btn`} onButtonClick={(window as any).handleUploadButton} view={this.getViewString(view)} />,
+            <EditorToolbarButton icon='cogs' className={`editortools-btn undo-editortools-btn`} onButtonClick={(window as any).calibrationProcess} view={this.getViewString(view)} />,
+            <EditorToolbarButton icon='question circle outline' className={`editortools-btn redo-editortools-btn`} onButtonClick={this.question} view={this.getViewString(view)} />
+        ];
     }
 
     protected onHwItemClick = () => {
@@ -340,16 +380,42 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
             <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
+                {/* // gb.override: must disable usb */}
+                {/* {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
                 {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                 {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                 <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
-                {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
+                {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />} */}
             </sui.DropdownMenu>
         )
 
         return el;
+    }
+
+    // gb.override: 4 override method for download and upload
+    handleUpload = () => {
+        this.setState({
+            isUpload: false
+        })
+    }
+    handleConnect() {
+        this.setState({
+            isUpload: true
+        })
+    }
+
+    //Change Text Button
+    handleText(text: string) {
+        this.setState({
+            textButton: text
+        })
+    }
+    //Change Color Button
+    handleColor(color: any) {
+        this.setState({
+            colorButton: color
+        })
     }
 
     renderCore() {
@@ -440,6 +506,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
+                {/* // gb.override  */}
+                <div className="ui icon buttons">{this.getIconbutton(computer)}</div> 
+                
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&
@@ -509,6 +578,8 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
             this.setState({zoomValue: this.state.zoomValue + 1})
         }
     }
+
+    
 
     zoomOut() {
         if (this.state.zoomValue > this.zoomMin) {
