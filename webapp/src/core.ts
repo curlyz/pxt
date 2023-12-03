@@ -32,6 +32,32 @@ let loadingDimmer: coretsx.LoadingDimmer;
 let loadingQueue: string[] = [];
 let loadingQueueMsg: pxt.Map<LoadingSection> = {};
 
+
+
+// gb.override add needed extension from core layer
+import * as buffer from 'buffer'
+import * as swal from 'sweetalert2'
+import * as tfjs from '@tensorflow/tfjs'
+import * as teachable from '@teachablemachine/image'
+import * as pako from 'pako'
+const textDiffCreate = require('textdiff-create')
+const textDiffPatch = require('textdiff-patch')
+const idb = require('idb')
+var msgpack = require('msgpack5')()
+
+
+export function getAVRBro() {
+
+    return {
+        buffer, swal, msgpack, teachable,
+        tfjs, new: true, pako,
+        textDiffCreate,
+        textDiffPatch,
+        idb,
+    };
+}
+
+
 export function isLoading() {
     return loadingDimmer && loadingDimmer.isVisible();
 }
@@ -145,7 +171,9 @@ function showNotificationMsg(kind: string, msg: string) {
 
 export function errorNotification(msg: string) {
     pxt.tickEvent("notification.error", { message: msg })
-    debugger // trigger a breakpoint when a debugger is connected, like in U.oops()
+
+    // gb.override: disable debugger when javascript can't ru
+    // debugger // trigger a breakpoint when a debugger is connected, like in U.oops()
     showNotificationMsg("err", msg)
 }
 
