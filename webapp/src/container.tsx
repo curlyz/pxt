@@ -154,6 +154,14 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.hide = this.hide.bind(this);
     }
 
+    // gb.override
+    __garablockStreamWebcam() {
+        //# GaraBlock: Add virtual webcam function
+        console.log("garablock.symbol.stream_webcam");
+        (window as any).streamWebcam();
+    }
+
+
     showExitAndSaveDialog() {
         pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
         this.props.parent.showExitAndSaveDialog();
@@ -318,10 +326,14 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         const simCollapseText = headless ? lf("Toggle the File Explorer") : lf("Toggle the simulator");
 
+        // gb.override: add livestream button
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {showHome && <sui.Item className="mobile only inherit" role="menuitem" icon="home" title={lf("Home")} text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
             {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" title={lf("Publish your game to create a shareable link")} text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
             {(showHome || showShare) && <div className="ui divider mobile only inherit" />}
+            
+            {<sui.Item role="menuitem" icon="camera" text={lf("Create a live stream")} onClick={this.__garablockStreamWebcam} />} 
+            
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
             {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} onClick={this.pair} /> : undefined}
@@ -526,18 +538,19 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
             textLanguage = <JavascriptMenuItem parent={parent}/>
         }
 
+        // gb.override: disable python and javascript editor
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal">
-                {showSandbox && <SandboxMenuItem parent={parent} />}
+                {/* {showSandbox && <SandboxMenuItem parent={parent} />} */}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
-                {textLanguage}
+                {/* {textLanguage}
                 {secondTextLanguage}
                 {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
                 {showAssets && <AssetMenuItem parent={parent} />}
-                <div className={`ui item toggle ${dropdownActive ? 'dropdown-attached' : ''}`}></div>
+                <div className={`ui item toggle ${dropdownActive ? 'dropdown-attached' : ''}`}></div> */}
             </div>
         )
     }
