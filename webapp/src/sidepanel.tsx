@@ -108,7 +108,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (c && typeof ResizeObserver !== "undefined") {
             const observer = new ResizeObserver(() => {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
-                if (scrollVisible)
+
+                // gb.override: always show hide panel (simulator)
+                if (scrollVisible || true)
                     this.simPanelRef?.classList.remove("invisibleScrollbar");
                 else
                     this.simPanelRef?.classList.add("invisibleScrollbar");
@@ -143,6 +145,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         pxt.tickEvent("tutorial.resizeInstructions",  {newSize });
     }
 
+    // gb.todo
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, showHostMultiplayerGameButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
