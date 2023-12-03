@@ -77,6 +77,7 @@ namespace pxt.blocks {
 
     // Saves entire workspace, including variables, into an xml string
     export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): string {
+        keepIds = true; // gb.override : must do this to support interactive
         const xml = Blockly.Xml.workspaceToDom(ws, !keepIds);
         const text = Blockly.Xml.domToText(xml);
         return text;
@@ -85,6 +86,7 @@ namespace pxt.blocks {
     // Saves only the blocks xml by iterating over the top blocks
     export function saveBlocksXml(ws: Blockly.Workspace, keepIds?: boolean): string[] {
         let topBlocks = ws.getTopBlocks(false);
+        keepIds = true; // gb.override : must do this to support interactive
         return topBlocks.map(block => {
             return Blockly.Xml.domToText(Blockly.Xml.blockToDom(block, !keepIds));
         });
