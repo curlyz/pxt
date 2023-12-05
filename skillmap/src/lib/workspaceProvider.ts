@@ -18,6 +18,11 @@ export async function getProjectAsync(headerId: string): Promise<pxt.workspace.P
     return ws.getProjectAsync(headerId);
 }
 
+// gb.override : expose to main logic
+(window as any).getProjectAsync = getProjectAsync;
+(window as any).getWorkspaceAsync = getWorkspaceAsync;
+
+
 export async function saveProjectAsync(project: pxt.workspace.Project): Promise<void> {
     const ws = await getWorkspaceAsync();
     await ws.saveProjectAsync(project);
