@@ -15,6 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
+    //% block.loc.id="%list| thêm %value| vào cuối danh sách"
     //% group="Modify"
     push(item: T): void;
 
@@ -31,6 +32,7 @@ interface Array<T> {
     //% help=arrays/pop
     //% shim=Array_::pop weight=45
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
+    //% block.loc.vi="lấy và xóa phần tử cuối cùng của %list"
     //% group="Read"
     pop(): T;
 
@@ -40,6 +42,7 @@ interface Array<T> {
     //% help=arrays/reverse
     //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
+    //% block.loc.vi="đảo ngược %list"
     //% group="Operations"
     reverse(): void;
 
@@ -49,6 +52,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=30
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
+    //% block.loc.vi="lấy và xóa phần tử đầu tiên của %list"
     //% group="Read"
     shift(): T;
 
@@ -59,6 +63,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% block="thêm %value vào đầu danh sách %list"
     //% group="Modify"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
@@ -159,6 +164,7 @@ interface Array<T> {
     //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=47
     //% blockId="array_removeat" block="%list| get and remove value at %index" blockNamespace="arrays"
+    //% block.loc.vi="%list| lấy và xóa phần tử tại %index"
     //% group="Read"
     removeAt(index: number): T;
 
@@ -181,6 +187,7 @@ interface Array<T> {
     //% help=arrays/index-of
     //% shim=Array_::indexOf weight=40
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
+    //% block.loc.vi="%list| tìm vị trí của %value"
     //% group="Operations"
     indexOf(item: T, fromIndex?: number): number;
 
@@ -207,6 +214,7 @@ interface Array<T> {
     //% help=arrays/pick-random
     //% helper=arrayPickRandom weight=25
     //% blockId="array_pickRandom" block="get random value from %list"
+    //% block.loc.vi="lấy phần tử bất kì từ $list"  
     //% blockNamespace="arrays"
     //% group="Read"
     _pickRandom(): T;
@@ -248,6 +256,7 @@ interface Array<T> {
     //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=14
     //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
+    //% block.loc.vi="%list| xóa phần tử tại %index"
     //% blockAliasFor="Array.removeAt"
     //% group="Modify"
     _removeAtStatement(index: number): void;
@@ -263,6 +272,7 @@ declare interface String {
     //% shim=String_::concat weight=49
     //% blockId="string_concat" blockNamespace="text"
     // block="join %list=text|%other"
+    // block.loc.vi="kết hợp các chuỗi %list=text|%other"
     concat(other: string): string;
 
     /**
@@ -272,6 +282,7 @@ declare interface String {
     //% shim=String_::charAt weight=48
     //% help=text/char-at
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
+    //% block.loc.vi="kí tự của %this=text|tại %pos"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -293,6 +304,7 @@ declare interface String {
     //% shim=String_::compare
     //% help=text/compare
     //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
+    //% block.loc.vi="so sánh %this=text| với %that"
     compare(that: string): number;
 
     /**
@@ -303,6 +315,7 @@ declare interface String {
     //% helper=stringSubstr
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% block.loc.vi="cắt chuỗi của %this=text|từ %start|với độ dài %length"
     substr(start: number, length?: number): string;
 
     /**
@@ -338,6 +351,7 @@ declare interface String {
     //% help=text/is-empty
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
+    //% block.loc.vi="%this=text| là chuỗi trống"
     isEmpty(): boolean;
 
     /**
@@ -349,6 +363,7 @@ declare interface String {
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
     //% block="%this=text|find index of %searchValue"
+    //% block.loc.vi="%this=text|tìm vị trí của %searchValue"
     indexOf(searchValue: string, start?: number): number;
 
     /**
@@ -360,6 +375,7 @@ declare interface String {
     //% help=text/includes
     //% blockId="string_includes" blockNamespace="text"
     //% block="%this=text|includes %searchValue"
+    //% block.loc.vi="%this=text|có %searchValue"
     includes(searchValue: string, start?: number): boolean;
 
     /**
@@ -371,6 +387,7 @@ declare interface String {
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
     //% block="split %this=text|at %separator"
+    //% block.loc.vi="phân cách %this=text|dùng %separator"
     split(separator?: string, limit?: number): string[];
 
     /**
@@ -403,6 +420,7 @@ declare interface String {
 //% shim=String_::toNumber
 //% help=text/parse-float
 //% blockId="string_parsefloat" block="parse to number %text" blockNamespace="text"
+//% block.loc.vi="chuyển %text thành số"
 //% text.defl="123"
 declare function parseFloat(text: string): number;
 
@@ -413,6 +431,7 @@ declare function parseFloat(text: string): number;
  * @param max the upper inclusive bound, eg: 10
  */
 //% blockId="device_random" block="pick random %min|to %limit"
+//% block.loc.vi="lẫy số ngẫu nhiên từ %min|đến %limit"
 //% blockNamespace="Math"
 //% help=math/randint
 //% shim=Math_::randomRange
@@ -458,6 +477,7 @@ declare namespace String {
     //% help=math/from-char-code
     //% shim=String_::fromCharCode weight=1
     //% blockNamespace="text" blockId="stringFromCharCode" block="text from char code %code"
+    //% block.loc.vi="kí tự từ mã %code"
     function fromCharCode(code: number): string;
 }
 
