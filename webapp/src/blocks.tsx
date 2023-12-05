@@ -50,9 +50,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
+        
+        // gb.override
+        (window as any).core = core // GaraBlock: exposing pxt core
 
         this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
         this.onErrorListResize = this.onErrorListResize.bind(this)
+        
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         if (!breakpoints || !this.compilationResult) return;
@@ -207,11 +211,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     pxt.debug(`loading block workspace`)
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
-                    this.loadBlockly(xml);
 
-                    this.resize();
-                    Blockly.svgResize(this.editor);
-                    this.isFirstBlocklyLoad = false;
+                    // gb.override : blockly load later after extension ready
+                    // this.loadBlockly(xml);
+                    // this.resize();
+                    // Blockly.svgResize(this.editor);
+                    // this.isFirstBlocklyLoad = false;
+
+                    setTimeout(async () => {
+                        while ((window as any).GaraBlockExtensionReady == undefined) {
+                            await new Promise((rs, rj) => {
+                                setTimeout(rs, 1000)
+                            })
+                            console.log('blocks.tsx', 'wating for extension to load first')
+                        }
+                        while ((window as any).Blockly.Blocks.frame_display == undefined) {
+                            await new Promise((rs, rj) => {
+                                setTimeout(rs, 1000)
+                            })
+                            console.log('blocks.tsx', 'wating for extension to load first')
+                        }
+                        this.loadBlockly(xml);
+                        this.resize();
+                        Blockly.svgResize(this.editor);
+                        this.isFirstBlocklyLoad = false;
+                    }, 1000)
+
                 }).finally(() => {
                     try {
                         // It's possible Blockly reloads and the loading dimmer is no longer a child of the editorDiv
@@ -1436,17 +1461,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (subns) return [];
         let extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[] = [];
         const onStartNamespace = pxt.appTarget.runtime.onStartNamespace || "loops";
-        if (ns == onStartNamespace) {
-            extraBlocks.push({
-                name: ts.pxtc.ON_START_TYPE,
-                attributes: {
-                    blockId: ts.pxtc.ON_START_TYPE,
-                    weight: pxt.appTarget.runtime.onStartWeight || 10,
-                    group: pxt.appTarget.runtime.onStartGroup || undefined
-                },
-                blockXml: `<block type="pxt-on-start"></block>`
-            });
-        }
+
+        // gb.override : this block is not in toolbox
+        // if (ns == onStartNamespace) {
+        //     extraBlocks.push({
+        //         name: ts.pxtc.ON_START_TYPE,
+        //         attributes: {
+        //             blockId: ts.pxtc.ON_START_TYPE,
+        //             weight: pxt.appTarget.runtime.onStartWeight || 10,
+        //             group: pxt.appTarget.runtime.onStartGroup || undefined
+        //         },
+        //         blockXml: `<block type="pxt-on-start"></block>`
+        //     });
+        // }
 
         // Inject pause until block
         const pauseUntil = snippets.getPauseUntil();
