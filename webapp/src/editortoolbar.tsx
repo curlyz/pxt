@@ -64,6 +64,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     }
 
+    // gb.override
+    componentDidMount() {
+        this.setState({
+            textButton: "Upload"
+        })
+        this.setState({
+            colorButton: "primary"
+        })
+    }
+
     saveProjectName(name: string, view?: string) {
         pxt.tickEvent("editortools.projectrename", { view: view }, { interactiveConsent: true });
         this.props.parent.updateHeaderName(name);
@@ -183,7 +193,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             readOnly={projectNameReadOnly}
         />)
         if (showSave) {
-            saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
+            // gb.override : add save button with name
+            saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={(window as any).garaBlockSaveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
+            // saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
         }
 
         return saveInput;
@@ -306,12 +318,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
 
         let downloadText: string;
-        if (compileState === "success") {
-            downloadText = targetTheme.useUploadMessage ? lf("Uploaded!") : lf("Downloaded!")
-        }
-        else {
-            downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download")
-        }
+        // if (compileState === "success") {
+        //     downloadText = targetTheme.useUploadMessage ? lf("Uploaded!") : lf("Downloaded!")
+        // }
+        // else {
+        //     downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download")
+        // }
+        // gb.override toolbar text
+        downloadText = lf(this.state.textButton);
 
 
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
@@ -364,7 +378,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         let el = [];
-        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
+        
+        // gb.override : download button color
+        // el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
+        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`${this.state.colorButton} download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={async () => {
+            await (window as any).actionConnectAndUpload()
+        }} view='computer' />)
+
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
@@ -379,7 +399,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
-            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+            // <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} displayAbove={true} displayRight={displayRight} onClick={() => (window as any).actionExitBoard()} >
+
                 {/* // gb.override: must disable usb */}
                 {/* {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
                 {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
