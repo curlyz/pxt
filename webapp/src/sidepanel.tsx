@@ -151,7 +151,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
 
-        const hasSimulator = !pxt.appTarget.simulator?.headless;
+        // gb.override
+        const hasSimulator = true;
+        // const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
 
         const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
