@@ -15,7 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
-    //% block.loc.id="%list| thêm %value| vào cuối danh sách"
+    //% block.loc.vi="%list| thêm %value| vào cuối danh sách"
     //% group="Modify"
     push(item: T): void;
 
@@ -63,7 +63,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
-    //% block="thêm %value vào đầu danh sách %list"
+    //% block.loc.vi="%list| thêm %value| vào vị trí đầu"
     //% group="Modify"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
@@ -176,6 +176,7 @@ interface Array<T> {
     //% help=arrays/insert-at
     //% shim=Array_::insertAt weight=20
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
+    //% block.loc.vi="%list| thêm vào vị trí %index| phần tử %value"
     //% group="Modify"
     insertAt(index: number, value: T): void;
 
@@ -228,6 +229,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=24
     //% blockId="array_unshift_statement" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% block.loc.vi="%list| thêm %value| vào đầu danh sách"
     //% blockAliasFor="Array.unshift"
     //% group="Modify"
     _unshiftStatement(value: T): void;
@@ -238,6 +240,7 @@ interface Array<T> {
     //% help=arrays/pop
     //% shim=Array_::pop weight=44
     //% blockId="array_pop_statement" block="remove last value from %list" blockNamespace="arrays"
+    //% block.loc.vi="xóa phần từ cuối cùng của %list"
     //% blockAliasFor="Array.pop"
     //% group="Modify"
     _popStatement(): void;
@@ -248,6 +251,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=29
     //% blockId="array_shift_statement" block="remove first value from %list" blockNamespace="arrays"
+    //% block.loc.vi="xóa phần từ đầu tiên của %list"
     //% blockAliasFor="Array.shift"
     //% group="Modify"
     _shiftStatement(): void;
