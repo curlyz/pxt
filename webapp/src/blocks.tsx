@@ -1416,9 +1416,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (config.listsBlocks && !isRemoved(toolbox.CategoryNameID.Arrays)) namespaces.push(toolbox.CategoryNameID.Arrays);
         if (config.textBlocks && !isRemoved(toolbox.CategoryNameID.Text)) namespaces.push(toolbox.CategoryNameID.Text);
 
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            namespaces.push(toolbox.CategoryNameID.Extensions);
-        }
+        // gb.override: remove extensions
+        // if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+        //     namespaces.push(toolbox.CategoryNameID.Extensions);
+        // }
 
         return namespaces.concat(super.getNamespaces());
     }
