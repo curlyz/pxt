@@ -182,7 +182,9 @@ export class ProjectView
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             // don't start collapsed in mobile since we can go fullscreen now
-            collapseEditorTools: simcfg.headless,
+            collapseEditorTools:true,
+            // gb.override
+            // collapseEditorTools: simcfg.headless,
             simState: pxt.editor.SimState.Stopped,
             autoRun: this.autoRunOnStart(),
             isMultiplayerGame: false,
@@ -3559,18 +3561,22 @@ export class ProjectView
     }
 
     toggleSimulatorCollapse() {
-        const state = this.state;
-        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
-        if (state.simState == pxt.editor.SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
-            this.startStopSimulator();
-        }
+        // gb.override always collapse editor
+        this.collapseSimulator();
+        
 
-        if (state.collapseEditorTools) {
-            this.expandSimulator();
-        }
-        else {
-            this.collapseSimulator();
-        }
+        // const state = this.state;
+        // pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
+        // if (state.simState == pxt.editor.SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
+        //     this.startStopSimulator();
+        // }
+
+        // if (state.collapseEditorTools) {
+        //     this.expandSimulator();
+        // }
+        // else {
+        //     this.collapseSimulator();
+        // }
     }
 
     expandSimulator() {
