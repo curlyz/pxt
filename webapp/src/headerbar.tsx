@@ -259,9 +259,10 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                     ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>
                     : this.getTargetLogo(targetTheme, highContrast, view)}
             </div>
-            {!home && <div className="center menu">
+            {/* gb.override: don't show menu of language */}
+            {/* {!home && <div className="center menu">
                 {this.getCenterLabel(targetTheme, view, tutorialOptions)}
-            </div>}
+            </div>} */}
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
                 {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}

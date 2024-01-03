@@ -3,62 +3,64 @@
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
 
-import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
-import * as cloudsync from "./cloudsync";
-import * as data from "./data";
-import * as pkg from "./package";
-import * as core from "./core";
-import * as sui from "./sui";
-import * as simulator from "./simulator";
-import * as srceditor from "./srceditor"
-import * as compiler from "./compiler"
-import * as cmds from "./cmds"
-import * as appcache from "./appcache";
-import * as screenshot from "./screenshot";
-import * as hidbridge from "./hidbridge";
-import * as share from "./share";
-import * as lang from "./lang";
 import * as accessibility from "./accessibility";
-import * as tutorial from "./tutorial";
-import * as sidebarTutorial from "./sidebarTutorial";
-import * as editortoolbar from "./editortoolbar";
-import * as dialogs from "./dialogs";
-import * as identity from "./identity";
-import * as container from "./container";
-import * as scriptsearch from "./scriptsearch";
-import * as extensionsBrowser from "./extensionsBrowser";
-import * as projects from "./projects";
-import * as scriptmanager from "./scriptmanager";
-import * as extensions from "./extensions";
-import * as sounds from "./sounds";
-import * as make from "./make";
-import * as blocklyToolbox from "./blocksSnippets";
-import * as monacoToolbox from "./monacoSnippets";
-import * as greenscreen from "./greenscreen";
 import * as accessibleblocks from "./accessibleblocks";
-import * as socketbridge from "./socketbridge";
-import * as webusb from "./webusb";
-import * as keymap from "./keymap";
+import * as appcache from "./appcache";
 import * as auth from "./auth";
+import * as blocklyToolbox from "./blocksSnippets";
 import * as cloud from "./cloud";
-import * as user from "./user";
+import * as cloudsync from "./cloudsync";
+import * as cmds from "./cmds";
+import * as compiler from "./compiler";
+import * as container from "./container";
+import * as core from "./core";
+import * as data from "./data";
+import * as dialogs from "./dialogs";
+import * as editortoolbar from "./editortoolbar";
+import * as extensions from "./extensions";
+import * as extensionsBrowser from "./extensionsBrowser";
+import * as greenscreen from "./greenscreen";
 import * as headerbar from "./headerbar";
-import * as sidepanel from "./sidepanel";
+import * as hidbridge from "./hidbridge";
+import * as identity from "./identity";
+import * as lang from "./lang";
+import * as make from "./make";
+import * as monacoToolbox from "./monacoSnippets";
+import * as pkg from "./package";
+import * as projects from "./projects";
 import * as qr from "./qr";
+import * as screenshot from "./screenshot";
+import * as scriptmanager from "./scriptmanager";
+import * as scriptsearch from "./scriptsearch";
+import * as share from "./share";
+import * as sidebarTutorial from "./sidebarTutorial";
+import * as sidepanel from "./sidepanel";
+import * as simulator from "./simulator";
+import * as socketbridge from "./socketbridge";
+import * as sounds from "./sounds";
+import * as srceditor from "./srceditor";
+import * as sui from "./sui";
+import * as tutorial from "./tutorial";
+import * as user from "./user";
+import * as webusb from "./webusb";
+import * as workspace from "./workspace";
 
-import * as monaco from "./monaco"
-import * as pxtjson from "./pxtjson"
-import * as serial from "./serial"
-import * as blocks from "./blocks"
-import * as gitjson from "./gitjson"
-import * as serialindicator from "./serialindicator"
-import * as assetEditor from "./components/assetEditor/editor";
-import * as draganddrop from "./draganddrop";
-import * as notification from "./notification";
-import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as blocks from "./blocks";
+import * as assetEditor from "./components/assetEditor/editor";
+import { Tour } from "./components/onboarding/Tour";
+import * as draganddrop from "./draganddrop";
+import * as electron from "./electron";
+import * as gitjson from "./gitjson";
+import { HintManager } from "./hinttooltip";
+import { appendTemporaryAssets, mergeProjectCode } from "./mergeProjects";
+import * as monaco from "./monaco";
+import * as notification from "./notification";
+import { parseTourStepsAsync } from "./onboarding";
+import * as pxtjson from "./pxtjson";
+import * as serial from "./serial";
+import * as serialindicator from "./serialindicator";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -71,11 +73,6 @@ declare const zip: any;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-import { HintManager } from "./hinttooltip";
-import { CodeCardView } from "./codecard";
-import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
-import { Tour } from "./components/onboarding/Tour";
-import { parseTourStepsAsync } from "./onboarding";
 
 pxsim.util.injectPolyphils();
 

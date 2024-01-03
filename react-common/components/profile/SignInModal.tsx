@@ -59,7 +59,13 @@ export const SignInModal = (props: SignInModalProps) => {
                 </div>
             ),
         [mode]
-    )
+    );
+
+    // gb.override
+    (window as any).SignInModal = {
+        rememberMe,
+        mode
+    }
 
     return (
         <Modal title={titleText} onClose={onClose} hideDismissButton={hideDismissButton}>

@@ -10,8 +10,7 @@ import * as auth from "./auth";
 import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { clearDontShowDownloadDialogFlag } from "./dialogs";
-import { userPrefersDownloadFlagSet } from "./webusb";
-import { dialogAsync, hideDialog } from "./core";
+
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -23,34 +22,30 @@ const enum View {
 
 interface EditorToolbarState {
     compileState: "compiling" | "success" | null;
-    // gb.override
     isInteractive: boolean,
     sliderPosition: string,
     isUpload: boolean,
     textButton: string,
     colorButton: "primary" | "secondary" | "red" | "yellow" | "olive" | "brown" | "grey" | "teal" | "purple" | "pink" | "blue" | "black" | "green"
-
 }
 
 export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarState> {
     protected compileTimeout: number;
-
     constructor(props: ISettingsProps) {
         super(props);
-
         this.saveProjectName = this.saveProjectName.bind(this);
         this.compile = this.compile.bind(this);
         this.saveFile = this.saveFile.bind(this);
         this.undo = this.undo.bind(this);
         this.redo = this.redo.bind(this);
+        this.external = this.external.bind(this);
+        this.question = this.question.bind(this);
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
         this.toggleCollapsed = this.toggleCollapsed.bind(this);
         this.cloudButtonClick = this.cloudButtonClick.bind(this);
-
-        // gb.override
         this.setState({ sliderPosition: '0' });
         (window as any).editorToolbar_tsx = this;
         (window as any).setUploadButtonState = async (state: any) => {
@@ -62,16 +57,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             }
         }
 
-    }
+        // // todo
+        // (window as any).setUploadButtonState = async (options: any) => {
+        //     let {color, icon, text, callback} = options
+        // }
 
-    // gb.override
-    componentDidMount() {
-        this.setState({
-            textButton: "Upload"
-        })
-        this.setState({
-            colorButton: "primary"
-        })
     }
 
     saveProjectName(name: string, view?: string) {
@@ -99,15 +89,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.redo();
     }
-
+    external(view?: string) {
+        pxt.tickEvent("editortools.undo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        this.props.parent.editor.undo();
+        console.log("external")
+    }
 
     question(view?: string) {
         pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.redo();
         console.log("question")
     }
-
-
 
     zoomIn(view?: string) {
         pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
@@ -140,8 +132,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         pxt.tickEvent("editortools.cloud", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         // TODO: do anything?
     }
-
+    componentDidMount() {
+        this.setState({
+            textButton: "Upload"
+        })
+        this.setState({
+            colorButton: "primary"
+        })
+    }
     componentDidUpdate() {
+
         if (this.props.parent.state.compiling) {
             if (!this.state?.compileState) {
                 this.setState({ compileState: "compiling" });
@@ -163,6 +163,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     componentWillUnmount() {
         if (this.compileTimeout) clearTimeout(this.compileTimeout)
+        this.setState({ sliderPosition: '0' })
+
     }
 
     private getCollapsedState(): string {
@@ -193,9 +195,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             readOnly={projectNameReadOnly}
         />)
         if (showSave) {
-            // gb.override : add save button with name
-            saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={(window as any).garaBlockSaveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
-            // saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
+            saveInput.push(<EditorToolbarButton icon='save' className={`right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(View.Computer)} key={`save${View.Computer}`} />)
         }
 
         return saveInput;
@@ -215,11 +215,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         ];
     }
 
-    protected getViewString(view: View): string {
-        return view.toString().toLowerCase();
-    }
-
-    // gb.override : create the download toolbar
     protected getIconbutton(view: View): JSX.Element[] {
         return [
             //! GaraBlock: Add download button
@@ -230,6 +225,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         ];
     }
 
+    protected getViewString(view: View): string {
+        return view.toString().toLowerCase();
+    }
+
     protected onHwItemClick = () => {
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog(true);
@@ -238,14 +237,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     }
 
-    protected onDownloadButtonClick = async () => {
+    protected onDownloadButtonClick = () => {
         pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
-        if (this.shouldShowPairingDialogOnDownload()
-            && !pxt.packetio.isConnected()
-            && !pxt.packetio.isConnecting()
-        ) {
-            await cmds.pairAsync(true);
-        }
         this.compile();
     }
 
@@ -261,39 +254,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         this.props.parent.pairAsync();
     }
 
-    protected onCannotPairClick = async () => {
-        pxt.tickEvent("editortools.pairunsupported", undefined, { interactiveConsent: true });
-        const reasonUnsupported = await pxt.usb.getReasonUnavailable();
-        let modalBody: string;
-        switch (reasonUnsupported) {
-            case "security":
-                modalBody = lf("WebUSB is disabled by browser policies. Check with your admin for help.");
-                break;
-            case "oldwindows":
-                modalBody = lf("WebUSB is not available on Windows devices with versions below 8.1.");
-                break;
-            case "electron":
-                modalBody = lf("WebUSB is not supported in electron.");
-                break;
-            case "notimpl":
-                modalBody = lf("WebUSB is not supported by this browser; please check for updates.");
-                break;
-        }
-
-        dialogAsync({
-            header: lf("Cannot Connect Device"),
-            body: modalBody,
-            hasCloseIcon: true,
-            buttons: [
-                {
-                    label: lf("Okay"),
-                    className: "primary",
-                    onclick: hideDialog
-                }
-            ]
-        });
-    }
-
     protected onDisconnectClick = () => {
         cmds.showDisconnectAsync();
     }
@@ -301,13 +261,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     protected onHelpClick = () => {
         pxt.tickEvent("editortools.downloadhelp");
         window.open(pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL);
-    }
-
-    protected shouldShowPairingDialogOnDownload = () => {
-        return pxt.appTarget.appTheme.preferWebUSBDownload
-            && pxt.appTarget?.compile?.webUSB
-            && pxt.usb.isEnabled
-            && !userPrefersDownloadFlagSet();
     }
 
     protected getCompileButton(view: View): JSX.Element[] {
@@ -318,38 +271,33 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
 
         let downloadText: string;
-        // if (compileState === "success") {
-        //     downloadText = targetTheme.useUploadMessage ? lf("Uploaded!") : lf("Downloaded!")
-        // }
-        // else {
-        //     downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download")
-        // }
-        // gb.override toolbar text
-        downloadText = lf(this.state.textButton);
+        if (compileState === "success") {
+            downloadText = targetTheme.useUploadMessage ? lf("Uploaded!") : lf("Upload!")
+        }
+        else {
+            downloadText = targetTheme.useUploadMessage ? lf(this.state.textButton) : lf(this.state.textButton)
+        }
 
 
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
-        const editorSupportsWebUSB = pxt.appTarget?.compile?.webUSB;
-        const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
-        const showUsbNotSupportedHint = editorSupportsWebUSB
-            && !pxt.usb.isEnabled
-            && !pxt.BrowserUtils.isPxtElectron()
-            && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
+        const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
-        const hideFileDownloadIcon = view === View.Computer && this.shouldShowPairingDialogOnDownload();
-        const fileDownloadIcon = targetTheme.downloadIcon || "xicon file-download";
 
         const successIcon = (packetioConnected && pxt.appTarget.appTheme.downloadDialogTheme?.deviceSuccessIcon)
             || "xicon file-download-check";
         const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
             || (compileState === "success" && successIcon)
             || (!!packetioConnected && packetioIcon)
-            || (!hideFileDownloadIcon && fileDownloadIcon);
+            || targetTheme.downloadIcon
+            || "xicon file-download";
 
         let downloadButtonClasses = "left attached ";
-        const downloadButtonIcon = "ellipsis";
+        // Change icon ellipsis to cancel
+        // const downloadButtonIcon = "ellipsis";
+        const downloadButtonIcon = "cancel";
+
         let hwIconClasses = "";
         let displayRight = false;
         if (isSaving) {
@@ -378,13 +326,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         let el = [];
-        
-        // gb.override : download button color
-        // el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
+
+        // makecode_buttonDownload
         el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`${this.state.colorButton} download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={async () => {
+            // this.setState({
+            //     isUpload: !this.state.isUpload
+            // })
+            // this.setState({
+            //     colorButton: "green"
+            // })
             await (window as any).actionConnectAndUpload()
         }} view='computer' />)
-
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
@@ -392,19 +344,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             || (packetioConnecting && lf("Connecting..."))
             || (boards ? lf("Click to select hardware") : (webUSBSupported ? lf("Click for one-click downloads.") : undefined));
 
-        const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose Hardware");
-        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download as File");
+        const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
+        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Upload")) : lf("Upload as file");
         const downloadHelp = pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL;
 
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
-            // <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
             <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} displayAbove={true} displayRight={displayRight} onClick={() => (window as any).actionExitBoard()} >
-
-                {/* // gb.override: must disable usb */}
-                {/* {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onPairClick} />}
-                {showUsbNotSupportedHint && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={this.onCannotPairClick} />}
+                {/* <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} displayAbove={true} displayRight={displayRight} onClick={() => (window as any).actionExitBoard()} > */}
+                {/* disabled Dropdown menu */}
+                {/* <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}> */}
+                {/* {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} tabIndex={-1} onClick={this.onPairClick} />}
                 {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                 {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                 <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
@@ -415,7 +366,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         return el;
     }
 
-    // gb.override: 4 override method for download and upload
+    // GaraBlock: Task done : setUploadButtonState
     handleUpload = () => {
         this.setState({
             isUpload: false
@@ -439,7 +390,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             colorButton: color
         })
     }
-
     renderCore() {
         const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
         const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
@@ -471,14 +421,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const showUndoRedo = !readOnly && !debugging && !flyoutOnly;
         const showZoomControls = !flyoutOnly;
-
-        // gb.override: dont show github
-        // const showGithub = !!pxt.appTarget.cloud
-        //     && !!pxt.appTarget.cloud.githubPackages
-        //     && targetTheme.githubEditor
-        //     && !pxt.BrowserUtils.isPxtElectron()
-        //     && !readOnly && !isController && !debugging && !tutorial;
-        const showGithub = false;
+        const showGithub = !!pxt.appTarget.cloud
+            && !!pxt.appTarget.cloud.githubPackages
+            && targetTheme.githubEditor
+            && !pxt.winrt.isWinRT() // not supported in windows 10
+            && !pxt.BrowserUtils.isPxtElectron()
+            && !readOnly && !isController && !debugging && !tutorial;
 
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
 
@@ -496,7 +444,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const mobile = View.Mobile;
         const computer = View.Computer;
-
         let downloadButtonClasses = "";
         let saveButtonClasses = "";
         if (isSaving) {
@@ -511,8 +458,25 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
-                        {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
+                        {compileBtn &&
+                            <EditorToolbarButton
+                                icon={downloadIcon}
+                                // className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`}
+                                className={`medium download-button mobile tablet ${downloadButtonClasses}`}
+                                text={compileTooltip}
+                                onButtonClick={this.compile}
+                                view='computer' />}
                     </div>
+                    {/* <div className="ui icon large buttons">
+                        {compileBtn &&
+                            <EditorToolbarButton
+                                icon={downloadIcon}
+                                // className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`}
+                                className={`primary large download-button ${downloadButtonClasses}`}
+                                title={compileToolptip}
+                                onButtonClick={this.compile}
+                                view='computer' />}
+                    </div> */}
                 </div>}
                 {/* TODO clean this; make it just getCompileButton, and set the buttons fontsize to 0 / the icon itself back to normal to just hide text */}
                 {!headless && <div className="ui item portrait hide">
@@ -522,16 +486,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
-            {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
+            {/* {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
                 <div id="projectNameArea" role="menu" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                         <identity.CloudSaveStatus headerId={header.id} />
                     </div>
-                </div>}
-            
-
+                </div>} */}
             <div style={{
                 display: "flex",
                 alignItems: "center",
@@ -568,14 +530,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 }
 
             </div>
-
             <div id="editorToolbarArea" role="menu" className="ui column items">
-                {/* // gb.override  */}
-                <div className="ui icon buttons">{this.getIconbutton(computer)}</div> 
-                
+                {/* Add 2 icon button  */}
+                <div className="ui icon buttons">{this.getIconbutton(computer)}</div>
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
-                {targetTheme.bigRunButton && !pxt.shell.isTimeMachineEmbed() &&
+                {targetTheme.bigRunButton &&
                     <div className="big-play-button-wrapper">
                         <EditorToolbarButton
                             className={`big-play-button play-button ${running ? "stop" : "play"}`}
@@ -606,7 +566,7 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     constructor(props: ZoomSliderProps) {
         super(props);
-        this.state = {zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin) / 2) + this.zoomMin};
+        this.state = { zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin) / 2) + this.zoomMin };
 
         this.handleWheelZoom = this.handleWheelZoom.bind(this);
         this.zoomUpdate = this.zoomUpdate.bind(this);
@@ -634,16 +594,14 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     private decreaseZoomState() {
         if (this.state.zoomValue > this.zoomMin) {
-            this.setState({zoomValue: this.state.zoomValue - 1});
+            this.setState({ zoomValue: this.state.zoomValue - 1 });
         }
     }
     private increaseZoomState() {
         if (this.state.zoomValue < this.zoomMax) {
-            this.setState({zoomValue: this.state.zoomValue + 1})
+            this.setState({ zoomValue: this.state.zoomValue + 1 })
         }
     }
-
-    
 
     zoomOut() {
         if (this.state.zoomValue > this.zoomMin) {
@@ -672,16 +630,16 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
                 this.props.parent.editor.zoomOut();
             }
         }
-        this.setState({zoomValue: newZoomValue});
+        this.setState({ zoomValue: newZoomValue });
         this.props.parent.forceUpdate();
     }
 
     renderCore() {
         return <div className="zoom">
-            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
+            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus" />
             <div id="zoomSlider">
                 <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}
-                aria-valuemax={this.zoomMax} aria-valuemin={this.zoomMin} aria-valuenow={this.state.zoomValue}></input>
+                    aria-valuemax={this.zoomMax} aria-valuemin={this.zoomMin} aria-valuenow={this.state.zoomValue}></input>
             </div>
             <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
         </div>
