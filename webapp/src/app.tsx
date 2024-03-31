@@ -5757,17 +5757,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         pxt.auth.enableAuth(false);
     enableAnalytics()
 
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        pxt.tickEvent("unsupported");
-        window.location.href = "/browsers";
-        core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
-        return;
-    } else if (pxt.BrowserUtils.isWinRT()) {
-        pxt.tickEvent("redirected.winrt");
-        window.location.href = "/v4";
-        core.showLoading("micro:bit-winrt-reload", lf("Redirecting to MakeCode micro:bit v4"));
-        return;
-    }
+    //! gb.override: BlueFy
+    // if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+    //     pxt.tickEvent("unsupported");
+    //     window.location.href = "/browsers";
+    //     core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
+    //     return;
+    // } else if (pxt.BrowserUtils.isWinRT()) {
+    //     pxt.tickEvent("redirected.winrt");
+    //     window.location.href = "/v4";
+    //     core.showLoading("micro:bit-winrt-reload", lf("Redirecting to MakeCode micro:bit v4"));
+    //     return;
+    // }
 
     const query = Util.parseQueryString(window.location.href);
 
