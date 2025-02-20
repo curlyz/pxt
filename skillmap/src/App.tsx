@@ -1,4 +1,5 @@
 /// <reference path="./lib/skillMap.d.ts" />
+/// <reference path="../../localtypings/pxteditor.d.ts" />
 
 import React from 'react';
 import { connect } from 'react-redux';
@@ -157,8 +158,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
         // TODO: include the pxt webconfig so that we can get the commitcdnurl (and not always pass live=true)
         const baseUrl = "";
         const targetId = pxt.appTarget.id;
-        const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
-        const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
 
         const langLowerCase = useLang?.toLocaleLowerCase();
         const localDevServe = pxt.BrowserUtils.isLocalHostDev()
@@ -174,8 +173,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
             targetId: targetId,
             baseUrl: baseUrl,
             code: useLang!,
-            pxtBranch: pxtBranch!,
-            targetBranch: targetBranch!,
             force: force,
         });
 
@@ -543,8 +540,6 @@ interface LocalizationUpdateOptions {
     targetId: string;
     baseUrl: string;
     code: string;
-    pxtBranch: string;
-    targetBranch: string;
     force?: boolean;
 }
 
@@ -552,8 +547,6 @@ async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise
     const {
         targetId,
         baseUrl,
-        pxtBranch,
-        targetBranch,
         force,
     } = opts;
     let { code } = opts;
@@ -562,8 +555,6 @@ async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise
         targetId,
         baseUrl,
         code,
-        pxtBranch,
-        targetBranch,
         pxt.Util.liveLocalizationEnabled(),
         ts.pxtc.Util.TranslationsKind.SkillMap
     );

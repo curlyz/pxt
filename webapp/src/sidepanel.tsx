@@ -11,15 +11,19 @@ import * as simulator from "./simulator";
 import { Button } from "./sui";
 import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
-import { fireClickOnEnter } from "./util";
 import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
+
+import ISettingsProps = pxt.editor.ISettingsProps;
+import { classList } from "../../react-common/components/util";
 
 interface SidepanelState {
     resized?: boolean;
     height?: number;
+    lastResizeHeight?: number;
+    shouldResize?: boolean;
 }
 
-interface SidepanelProps extends pxt.editor.ISettingsProps {
+interface SidepanelProps extends ISettingsProps {
     inHome: boolean;
     showKeymap?: boolean;
     showSerialButtons?: boolean;
@@ -30,6 +34,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
     tutorialOptions?: pxt.tutorial.TutorialOptions;
+    /** An optional tutorial layout mode where the sim is on the left and instructions are at the top, regardless of screen size. */
     tutorialSimSidebar?: boolean;
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
@@ -41,7 +46,10 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
 }
 
 export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
+    protected simRef: HTMLDivElement
     protected simPanelRef: HTMLDivElement;
+    private simResizeObserver?: ResizeObserver;
+    private simPanelResizeObserver?: ResizeObserver;
 
     constructor(props: SidepanelProps) {
         super(props);
@@ -49,6 +57,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (props.tutorialOptions?.tutorial && !props.tutorialSimSidebar) {
             this.props.showMiniSim(true);
         }
+
+        this.updateShouldResize = this.updateShouldResize.bind(this);
     }
 
     UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
@@ -68,8 +78,38 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
+    componentDidMount(): void {
+        this.updateShouldResize();
+    }
+
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
-        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
+        if ((this.state.height || state.height) && this.state.height != state.height) {
+            this.props.setEditorOffset();
+        }
+
+        this.updateShouldResize();
+    }
+
+    componentWillUnmount(): void {
+        if (this.simResizeObserver && this.simRef) {
+            this.simResizeObserver.unobserve(this.simRef);
+        }
+
+        if (this.simPanelResizeObserver && this.simPanelRef) {
+            this.simPanelResizeObserver.unobserve(this.simPanelRef);
+        }
+    }
+
+    private updateShouldResize() {
+        const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
+        if (shouldResize != this.state.shouldResize) {
+            let height = this.state.height;
+            if (shouldResize && !this.state.height && this.state.lastResizeHeight) {
+                height = this.state.lastResizeHeight;
+            }
+
+            this.setState({ shouldResize, height });
+        }
     }
 
     protected tryShowSimulator = () => {
@@ -106,7 +146,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected handleSimPanelRef = (c: HTMLDivElement) => {
         this.simPanelRef = c;
         if (c && typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
+            this.simPanelResizeObserver = new ResizeObserver(() => {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
 
                 // gb.override: always show hide panel (simulator)
@@ -115,13 +155,26 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 else
                     this.simPanelRef?.classList.add("invisibleScrollbar");
             })
-            observer.observe(c);
+            this.simPanelResizeObserver.observe(c);
+        }
+    }
+
+    protected handleSimRef = (c: HTMLDivElement) => {
+        this.simRef = c;
+        if (c && typeof ResizeObserver !== "undefined") {
+            this.simResizeObserver = new ResizeObserver(() => {
+                window.requestAnimationFrame(this.updateShouldResize);
+            });
+            this.simResizeObserver.observe(c);
         }
     }
 
     protected setComponentHeight = (height?: number, isResize?: boolean) => {
         if (height != this.state.height || isResize != this.state.resized) {
-            this.setState({resized: this.state.resized || isResize, height: height});
+            this.setState({
+                resized: this.state.resized || isResize,
+                height: height,
+                lastResizeHeight: isResize ? height : this.state.lastResizeHeight});
         }
     }
 
@@ -156,14 +209,42 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         // const hasSimulator = !pxt.appTarget.simulator?.headless;
         const showOpenInVscodeButton = parent.isJavaScriptActive() && pxt.appTarget?.appTheme?.showOpenInVscode;
 
-        const simContainerClassName = `simulator-container ${this.props.tutorialSimSidebar ? "" : " hidden"}`;
-        const outerTutorialContainerClassName = `editor-sidebar tutorial-container-outer${this.props.tutorialSimSidebar ? " topInstructions" : ""}`
-        const shouldResize = pxt.BrowserUtils.isTabletSize() || this.props.tutorialSimSidebar;
-        const editorSidebarHeight = shouldResize ? `${this.state.height}px` : undefined;
+        const simContainerClassName = classList(
+            "simulator-container",
+            !this.props.tutorialSimSidebar && "hidden"
+        );
+        const outerTutorialContainerClassName = classList(
+            "editor-sidebar",
+            "tutorialWrapper",
+            "tutorial-container-outer",
+            this.props.tutorialSimSidebar && "topInstructions"
+        );
+        const editorSidebarClassName = classList(
+            "editor-sidebar",
+            this.props.tutorialSimSidebar && "tutorial-sim"
+        );
 
-        return <div id="simulator" className="simulator">
+        const editorSidebarHeight = this.state.shouldResize && this.state.height ? `${this.state.height}px` : undefined;
+
+        const tutorialContainer = tutorialOptions ? <TutorialContainer
+            parent={parent}
+            tutorialId={tutorialOptions.tutorial}
+            name={tutorialOptions.tutorialName}
+            steps={tutorialOptions.tutorialStepInfo}
+            currentStep={tutorialOptions.tutorialStep}
+            tutorialOptions={tutorialOptions}
+            hideIteration={tutorialOptions.metadata?.hideIteration}
+            hasTemplate={!!tutorialOptions.templateCode}
+            preferredEditor={tutorialOptions.metadata?.preferredEditor}
+            tutorialSimSidebar={this.props.tutorialSimSidebar}
+            hasBeenResized={this.state.resized && this.state.shouldResize}
+            onTutorialStepChange={onTutorialStepChange}
+            onTutorialComplete={onTutorialComplete}
+            setParentHeight={newSize => this.setComponentHeight(newSize, false)} /> : undefined;
+
+        return <div id="simulator" className="simulator" ref={this.handleSimRef}>
             {!hasSimulator && <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />}
-            <div id="editorSidebar" className="editor-sidebar" style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
+            <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -193,31 +274,20 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             </div>
             {tutorialOptions &&
                 <div className={this.props.tutorialSimSidebar ? "topInstructionsWrapper" : ""}>
-                    <VerticalResizeContainer
-                        id="tutorialWrapper"
-                        className={outerTutorialContainerClassName}
-                        maxHeight="500px"
-                        minHeight="100px"
-                        initialHeight={editorSidebarHeight}
-                        resizeEnabled={shouldResize}
-                        onResizeDrag={this.onResizeDrag}
-                        onResizeEnd={this.onResizeEnd}>
-                        <TutorialContainer
-                            parent={parent}
-                            tutorialId={tutorialOptions.tutorial}
-                            name={tutorialOptions.tutorialName}
-                            steps={tutorialOptions.tutorialStepInfo}
-                            currentStep={tutorialOptions.tutorialStep}
-                            tutorialOptions={tutorialOptions}
-                            hideIteration={tutorialOptions.metadata?.hideIteration}
-                            hasTemplate={!!tutorialOptions.templateCode}
-                            preferredEditor={tutorialOptions.metadata?.preferredEditor}
-                            tutorialSimSidebar={this.props.tutorialSimSidebar}
-                            hasBeenResized={this.state.resized && shouldResize}
-                            onTutorialStepChange={onTutorialStepChange}
-                            onTutorialComplete={onTutorialComplete}
-                            setParentHeight={newSize => this.setComponentHeight(newSize, false)} />
-                    </VerticalResizeContainer>
+                    {this.state.shouldResize ?
+                        <VerticalResizeContainer
+                            className={outerTutorialContainerClassName}
+                            maxHeight="500px"
+                            minHeight="100px"
+                            initialHeight={editorSidebarHeight}
+                            resizeEnabled={this.state.shouldResize}
+                            onResizeDrag={this.onResizeDrag}
+                            onResizeEnd={this.onResizeEnd}>
+                                {tutorialContainer}
+                        </VerticalResizeContainer> :
+                        <div className={outerTutorialContainerClassName}>
+                            {tutorialContainer}
+                        </div>}
                 </div>}
         </div>
     }

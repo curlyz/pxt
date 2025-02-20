@@ -160,7 +160,7 @@ interface Array<T> {
     //% shim=Array_::removeElement weight=48
     removeElement(element: T): boolean;
 
-    /** Remove the element at a certain index. */
+    /** Remove and return the element at a certain index. */
     //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=47
     //% blockId="array_removeat" block="%list| get and remove value at %index" blockNamespace="arrays"
@@ -257,7 +257,7 @@ interface Array<T> {
     _shiftStatement(): void;
 
     /** Remove the element at a certain index. */
-    //% help=arrays/remove-at
+    //% help=arrays/remove-at-statement
     //% shim=Array_::removeAt weight=14
     //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
     //% block.loc.vi="%list| xóa phần tử tại %index"
@@ -287,6 +287,7 @@ declare interface String {
     //% help=text/char-at
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     //% block.loc.vi="kí tự của %this=text|tại %pos"
+    //% this.defl="this"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -298,7 +299,10 @@ declare interface String {
      * Return the Unicode value of the character at the specified location.
      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
      */
-    //% shim=String_::charCodeAt
+    //% shim=String_::charCodeAt weight=46
+    //% help=text/char-code-at
+    //% blockId="string_charcode_at" block="char code from $this=text|at $index" blockNamespace="text"
+    //% this.defl="this"
     charCodeAt(index: number): number;
 
     /**
@@ -309,6 +313,7 @@ declare interface String {
     //% help=text/compare
     //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
     //% block.loc.vi="so sánh %this=text| với %that"
+    //% this.defl="this"
     compare(that: string): number;
 
     /**
@@ -320,6 +325,7 @@ declare interface String {
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     //% block.loc.vi="cắt chuỗi của %this=text|từ %start|với độ dài %length"
+    //% this.defl="this"
     substr(start: number, length?: number): string;
 
     /**
@@ -356,6 +362,7 @@ declare interface String {
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
     //% block.loc.vi="%this=text| là chuỗi trống"
+    //% this.defl="this"
     isEmpty(): boolean;
 
     /**
@@ -368,6 +375,7 @@ declare interface String {
     //% blockId="string_indexof" blockNamespace="text"
     //% block="%this=text|find index of %searchValue"
     //% block.loc.vi="%this=text|tìm vị trí của %searchValue"
+    //% this.defl="this"
     indexOf(searchValue: string, start?: number): number;
 
     /**
@@ -380,6 +388,7 @@ declare interface String {
     //% blockId="string_includes" blockNamespace="text"
     //% block="%this=text|includes %searchValue"
     //% block.loc.vi="%this=text|có %searchValue"
+    //% this.defl="this"
     includes(searchValue: string, start?: number): boolean;
 
     /**
@@ -392,6 +401,7 @@ declare interface String {
     //% blockId="string_split" blockNamespace="text"
     //% block="split %this=text|at %separator"
     //% block.loc.vi="phân cách %this=text|dùng %separator"
+    //% this.defl="this"
     split(separator?: string, limit?: number): string[];
 
     /**

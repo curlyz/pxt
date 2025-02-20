@@ -7,10 +7,11 @@ import * as pkg from "./package";
 import * as core from "./core";
 import { fireClickOnEnter } from "./util";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import IFile = pxt.editor.IFile;
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 interface FileListState {
-    currentFile?: pxt.editor.IFile;
+    currentFile?: IFile;
     expandedPkg?: string;
 }
 
@@ -252,7 +253,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         </PackgeTreeItem>]
     }
 
-    private packageContainsFile(pkg: pkg.EditorPackage, f: pxt.editor.IFile) {
+    private packageContainsFile(pkg: pkg.EditorPackage, f: IFile) {
         return pkg.sortedFiles().filter(file => file == f).length > 0;
     }
 
@@ -361,7 +362,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 return Promise.resolve()
             }
             let fileText = "";
-            if (fileName == customFile) {
+            const tsFiles = pkgCfg.files.filter(f => f.endsWith(".ts") && !f.endsWith(".g.ts"));
+            // if the length is 1, the only ts file is main.ts, thus
+            // we are adding the first custom file to the project
+            if (tsFiles.length === 1) {
                 fileText = customFileHeader(pxt.appTarget.appTheme.homeUrl) + customFileText;
             } else if (comment) {
                 fileText = `${comment} ${commentText}

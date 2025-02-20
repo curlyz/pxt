@@ -5,15 +5,14 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
-import * as cloud from "./cloud";
-import * as auth from "./auth";
 import * as identity from "./identity";
 import { ProjectView } from "./app";
-import { clearDontShowDownloadDialogFlag } from "./dialogs";
 import { userPrefersDownloadFlagSet } from "./webusb";
 import { dialogAsync, hideDialog } from "./core";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
+import SimState = pxt.editor.SimState;
+
 
 const enum View {
     Computer,
@@ -333,6 +332,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const webUSBSupported = pxt.usb.isEnabled && editorSupportsWebUSB;
         const showUsbNotSupportedHint = editorSupportsWebUSB
             && !pxt.usb.isEnabled
+            && pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App
             && !pxt.BrowserUtils.isPxtElectron()
             && (pxt.BrowserUtils.isChromiumEdge() || pxt.BrowserUtils.isChrome());
         const packetioConnected = !!this.getData("packetio:connected");
@@ -446,11 +446,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
+        const isTimeMachineEmbed = pxt.shell.isTimeMachineEmbed();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
         const flyoutOnly = editorState && editorState.hasCategories === false;
+        const hideToolbox = tutorial && tutorialOptions.metadata?.hideToolbox;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
@@ -466,8 +468,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
-        const running = simState == pxt.editor.SimState.Running;
-        const starting = simState == pxt.editor.SimState.Starting;
+        const running = simState == SimState.Running;
+        const starting = simState == SimState.Starting;
 
         const showUndoRedo = !readOnly && !debugging && !flyoutOnly;
         const showZoomControls = !flyoutOnly;
@@ -484,10 +486,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
         const bigRunButtonTooltip = (() => {
             switch (simState) {
-                case pxt.editor.SimState.Stopped:
+                case SimState.Stopped:
                     return lf("Start");
-                case pxt.editor.SimState.Pending:
-                case pxt.editor.SimState.Starting:
+                case SimState.Pending:
+                case SimState.Starting:
                     return lf("Starting");
                 default:
                     return lf("Stop");
@@ -508,22 +510,22 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
-            <div id="downloadArea" role="menu" className="ui column items">{headless &&
+            <div id="downloadArea" role="menubar" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
                         {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
                     </div>
                 </div>}
                 {/* TODO clean this; make it just getCompileButton, and set the buttons fontsize to 0 / the icon itself back to normal to just hide text */}
-                {!headless && <div className="ui item portrait hide">
+                {!headless && !isTimeMachineEmbed && <div className="ui item portrait hide">
                     {compileBtn && this.getCompileButton(computer)}
                 </div>}
-                {!headless && <div className="ui portrait only">
+                {!headless && !isTimeMachineEmbed && <div className="ui portrait only">
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
             {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
-                <div id="projectNameArea" role="menu" className="ui column items">
+                <div id="projectNameArea" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}

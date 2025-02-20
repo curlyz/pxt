@@ -1,8 +1,12 @@
 import * as pkg from "./package";
 import * as core from "./core";
 import * as workspace from "./workspace";
+import * as Blockly from "blockly";
+import * as pxtblockly from "../../pxtblocks";
 
 import U = pxt.Util;
+import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
+import { Measurements } from "./constants";
 
 function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
@@ -62,8 +66,8 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
     reportDiagnosticErrors(errors);
 
     // send message to editor controller if any
-    if (pxt.editor.shouldPostHostMessages()) {
-        pxt.editor.postHostMessageAsync({
+    if (shouldPostHostMessages()) {
+        postHostMessageAsync({
             type: "pxthost",
             action: "workspacediagnostics",
             operation,
@@ -284,7 +288,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         .then(resp => {
             // try to patch event locations
             if (resp.success && blockInfo && oldWorkspace && blockFile) {
-                const newXml = pxt.blocks.layout.patchBlocksFromOldWorkspace(blockInfo, oldWorkspace, resp.outfiles[blockFile]);
+                const newXml = pxtblockly.patchBlocksFromOldWorkspace(blockInfo, oldWorkspace, resp.outfiles[blockFile]);
                 resp.outfiles[blockFile] = newXml;
             }
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
@@ -468,7 +472,7 @@ export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, ar
             if (pxt.appTarget.compile.switches.time) {
                 pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
                 if (res.times)
-                    console.log(res.times)
+                    pxt.log(res.times)
             }
             pxt.debug("worker op done: " + op)
             return res
@@ -676,7 +680,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         }
         catch (e) {
             // Don't fail if the indexeddb fails, but log it
-            console.log("Unable to open API info cache DB");
+            pxt.log("Unable to open API info cache DB");
             return null;
         }
 
@@ -876,6 +880,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
 }
 
 function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
+    pxtblockly.cleanBlocks();
     const mainPkg = pkg.mainPkg;
     const project = pkg.getEditorPkg(mainPkg);
     const targetVersion = project.header.targetVersion;
@@ -890,15 +895,14 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
         .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
-            const text = pxt.blocks.importXml(targetVersion, fileText, info, true);
+            const text = pxtblockly.importXml(targetVersion, fileText, info, true);
 
-            const xml = Blockly.Xml.textToDom(text);
-            pxt.blocks.domToWorkspaceNoEvents(xml, ws);
-            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
-            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            const xml = Blockly.utils.xml.textToDom(text);
+            pxtblockly.domToWorkspaceNoEvents(xml, ws);
+            const upgradedXml = pxtblockly.workspaceToDom(ws);
             patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 
-            return pxt.blocks.compileAsync(ws, info)
+            return pxtblockly.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles[pxt.MAIN_TS] = res.source;
@@ -921,7 +925,8 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
                 patchedFiles
             };
         })
-        .catch(() => {
+        .catch(e => {
+            pxt.log(e)
             pxt.debug("Block upgrade failed, falling back to TS");
             return upgradeFromTSAsync();
         });
@@ -1171,7 +1176,7 @@ class ApiInfoIndexedDb {
         }
         return openAsync()
             .catch(e => {
-                console.log(`db: failed to open api database, try delete entire store...`)
+                pxt.log(`db: failed to open api database, try delete entire store...`)
                 return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
                     .then(() => openAsync());
             })
@@ -1194,7 +1199,7 @@ class ApiInfoIndexedDb {
     }
 
     setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
-        pxt.perf.measureStart("compiler db setAsync")
+        pxt.perf.measureStart(Measurements.CompilerDbSetAsync)
         const key = getPackageKey(pack);
         const hash = getPackageHash(pack);
 
@@ -1206,15 +1211,15 @@ class ApiInfoIndexedDb {
 
         return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry)
             .then(() => {
-                pxt.perf.measureEnd("compiler db setAsync")
+                pxt.perf.measureEnd(Measurements.CompilerDbSetAsync)
             })
     }
 
     clearAsync(): Promise<void> {
         return this.db.deleteAllAsync(ApiInfoIndexedDb.TABLE)
-            .then(() => console.debug(`db: all clean`))
+            .then(() => pxt.debug(`db: all clean`))
             .catch(e => {
-                console.error('db: failed to delete all');
+                pxt.error('db: failed to delete all');
             })
     }
 }

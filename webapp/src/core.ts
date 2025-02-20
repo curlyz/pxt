@@ -13,6 +13,8 @@ import { pushNotificationMessage } from "../../react-common/components/Notificat
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { Milestones } from "./constants";
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 
 export type Component<S, T> = data.Component<S, T>;
 
@@ -72,7 +74,7 @@ export function isLoading() {
 
 export function hideLoading(id: string) {
     pxt.debug("hideloading: " + id);
-    pxt.perf.recordMilestone(`loading done #${id}`)
+    pxt.perf.recordMilestone(Milestones.LoadingDone, { id })
     if (loadingQueueMsg[id] != undefined) {
         // loading exists, remove from queue
         const index = loadingQueue.indexOf(id);
@@ -106,7 +108,7 @@ export function killLoadingQueue() {
 export function showLoading(id: string, msg: string, percentComplete?: number) {
     pxt.debug("showloading: " + id);
     if (loadingQueueMsg[id]) return; // already loading?
-    pxt.perf.recordMilestone(`loading started #${id}`)
+    pxt.perf.recordMilestone(Milestones.LoadingStarted, { id })
     initializeDimmer();
     loadingDimmer.show(
         "initializing-loader",
@@ -373,6 +375,7 @@ export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())
 }
 export async function setHighContrast(on: boolean) {
+    sendUpdateFeedbackTheme(on);
     await auth.setHighContrastPrefAsync(on);
 }
 
@@ -432,13 +435,13 @@ export function apiAsync(path: string, data?: any) {
         Cloud.privatePostAsync(path, data) :
         Cloud.privateGetAsync(path))
         .then(resp => {
-            console.log("*")
-            console.log("*******", path, "--->")
-            console.log("*")
-            console.log(resp)
-            console.log("*")
+            pxt.log("*")
+            pxt.log("*******", path, "--->")
+            pxt.log("*")
+            pxt.log(resp)
+            pxt.log("*")
             return resp
         }, err => {
-            console.log(err.message)
+            pxt.log(err.message)
         })
 }

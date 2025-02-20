@@ -1,6 +1,5 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
-/// <reference path="pxtblockly.d.ts" />
 /// <reference path="pxtelectron.d.ts" />
 
 declare namespace pxt {
@@ -34,6 +33,7 @@ declare namespace pxt {
         electronManifest?: pxt.electron.ElectronManifest;
         profileNotification?: ProfileNotification;
         kiosk?: KioskConfig;
+        teachertool?: TeacherToolConfig;
     }
 
     interface PackagesConfig {
@@ -56,6 +56,19 @@ declare namespace pxt {
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: string[];
+        // This repo's simulator extension configuration
+        simx?: SimulatorExtensionConfig;
+    }
+
+    interface SimulatorExtensionConfig {
+        aspectRatio?: number; // Aspect ratio for the iframe. Default: 1.22.
+        permanent?: boolean; // If true, don't recycle the iframe between runs. Default: true.
+        devUrl?: string; // URL to load for local development. Pass `simxdev` on URL to enable. Default: undefined.
+        index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
+        // backend-only options
+        sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
+        repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.
+        ref?: string; // The branch of the repo to sync. Default: "gh-pages".
     }
 
     interface ShareConfig {
@@ -87,6 +100,15 @@ declare namespace pxt {
         name: string;
         description: string;
         highScoreMode: string;
+    }
+
+    interface TeacherToolConfig {
+        carousels?: TeacherToolCarouselConfig[];
+    }
+
+    interface TeacherToolCarouselConfig {
+        title: string;
+        cardsUrl: string;
     }
 
     interface AppTarget {
@@ -258,6 +280,7 @@ declare namespace pxt {
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
 
         // a map of allowed simulator channel to URL to handle specific control messages
+        // DEPRECATED. Use `simx` in targetconfig.json approvedRepoLib instead.
         messageSimulators?: pxt.Map<{
             // the URL to load the simulator, $PARENT_ORIGIN$ will be replaced by the parent
             // origin to validate messages
@@ -268,6 +291,9 @@ declare namespace pxt {
             // don't recycle the iframe between runs
             permanent?: boolean;
         }>;
+        // This is for testing new simulator extensions before adding them to targetconfig.json.
+        // DO NOT SHIP SIMULATOR EXTENSIONS HERE. Add them to targetconfig.json/approvedRepoLib instead.
+        testSimulatorExtensions?: pxt.Map<SimulatorExtensionConfig>;
     }
 
     interface TargetCompileService {
@@ -356,14 +382,15 @@ declare namespace pxt {
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         invertedGitHub?: boolean; // inverted github view
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
-        blocklyOptions?: Blockly.BlocklyOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        // FIXME (riknoll): Can't use Blockly types here
+        blocklyOptions?: any; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification for localization files
+        crowdinProjectId?: number; // Crowdin project id. Can be found by going to the project page in Crowdin and selecting Tools > API
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
@@ -398,8 +425,8 @@ declare namespace pxt {
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
-        blockIcons?: Map<string>;
-        blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
+        blockIcons?: Map<string | number>;
+        blocklyColors?: pxt.Map<string>; // Overrides for the styles in the workspace Blockly.Theme.ComponentStyle
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
         noReloadOnUpdate?: boolean; // do not notify the user or reload the page when a new app cache is downloaded
         appPathNames?: string[]; // Authorized URL paths in embedded apps, all other paths will display a warning banner
@@ -414,6 +441,7 @@ declare namespace pxt {
         browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
         editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
         experiments?: string[]; // list of experiment ids, also enables this feature
+        supportedExperiences?: string[]; // list of supported "experiences" (separate CRAs, like code eval)
         chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
         bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
         bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
@@ -494,6 +522,12 @@ declare namespace pxt {
         timeMachine?: boolean; // Save/restore old versions of a project experiment
         blocklySoundVolume?: number; // A number between 0 and 1 that sets the volume for blockly sounds (e.g. connect, disconnect, click)
         timeMachineQueryParams?: string[]; // An array of query params to pass to timemachine iframe embed
+        timeMachineDiffInterval?: number; // An interval in milliseconds at which to take diffs to store in project history. Defaults to 5 minutes
+        timeMachineSnapshotInterval?: number; // An interval in milliseconds at which to take full project snapshots in project history. Defaults to 15 minutes
+        adjustBlockContrast?: boolean; // If set to true, all block colors will automatically be adjusted to have a contrast ratio of 4.5 with text
+        feedbackEnabled?: boolean; // allow feedback to be shown on a target
+        ocvAppId?: number; // the app id needed to attach to the OCV service
+        ocvFrameUrl?: string; // the base url for the OCV service
     }
 
     interface DownloadDialogTheme {
@@ -509,6 +543,7 @@ declare namespace pxt {
 
         dragFileImage?: string;
         connectDeviceImage?: string;
+        disconnectDeviceImage?: string;
         selectDeviceImage?: string;
         connectionSuccessImage?: string;
         incompatibleHardwareImage?: string;
@@ -817,6 +852,7 @@ declare namespace ts.pxtc {
         fixedInstance?: boolean;
         expose?: boolean; // expose to VM despite being in pxt:: namespace
         decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
+        decompilerShadowAlias?: string; // hints to the decompiler that this block can be replaced with the block with this id if doing so would create a shadow block
         constantShim?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
@@ -1018,6 +1054,7 @@ declare namespace ts.pxtc {
         pyName?: string;
         pyQName?: string;
         snippetAddsDefinitions?: boolean;
+        isStatic?: boolean;
     }
 
     interface ApisInfo {
@@ -1150,6 +1187,7 @@ declare namespace pxt.tutorial {
         code: string[]; // all code
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
+        templateLanguage?: string; // language of template code
         metadata?: TutorialMetadata;
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
@@ -1163,6 +1201,7 @@ declare namespace pxt.tutorial {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        hideToolbox?: boolean; // hide the toolbox in the tutorial
         hideIteration?: boolean; // hide step control in tutorial
         diffs?: boolean; // automatically diff snippets
         noDiffs?: boolean; // don't automatically generated diffs
@@ -1170,6 +1209,7 @@ declare namespace pxt.tutorial {
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
+        hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
     }
 
     interface TutorialBlockConfigEntry {
@@ -1255,6 +1295,7 @@ declare namespace pxt.tutorial {
         tutorialCode?: string[]; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
+        templateLanguage?: string;
         mergeHeaderId?: string;
         mergeCarryoverCode?: boolean;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows

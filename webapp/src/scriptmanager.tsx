@@ -4,7 +4,6 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as compiler from "./compiler";
-import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
@@ -12,6 +11,8 @@ import { fireClickOnEnter } from "./util";
 import { Modal } from "../../react-common/components/controls/Modal";
 import { ProgressBar } from "./dialogs";
 import { classList } from "../../react-common/components/util";
+
+import ISettingsProps = pxt.editor.ISettingsProps;
 
 declare const zip: any;
 
@@ -23,8 +24,6 @@ export function loadZipAsync(): Promise<boolean> {
             .catch(e => false)
     return loadZipJsPromise;
 }
-
-type ISettingsProps = pxt.editor.ISettingsProps;
 
 export type ScriptSource = 'cloud' | 'local';
 
@@ -71,6 +70,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleOpen = this.handleOpen.bind(this);
         this.handleOpenNewTab = this.handleOpenNewTab.bind(this);
         this.handleOpenNewLinkedTab = this.handleOpenNewLinkedTab.bind(this);
+        this.handleRename = this.handleRename.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -189,10 +189,32 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.props.parent.openNewTab(header, true);
     }
 
-    handleDuplicate() {
-        pxt.tickEvent("scriptmanager.dup", undefined, { interactiveConsent: true });
+    async handleRename() {
+        pxt.tickEvent("scriptmanager.rename", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
         // Prompt for the new project name
+        const opts: core.PromptOptions = {
+            header: lf("Choose a new name for your project"),
+            agreeLbl: lf("Rename"),
+            agreeClass: "green approve positive",
+            initialValue: header.name,
+            placeholder: lf("Enter your project name here"),
+            size: "tiny"
+        };
+        const newName = await core.promptAsync(opts);
+        if (newName === null)
+            return false; // null means cancelled
+
+        const clonedHeader = await workspace.renameAsync(header, newName);
+        await workspace.saveAsync(clonedHeader);
+        this.setState({ selected: {} });
+        return true;
+    }
+
+    async handleDuplicate() {
+        pxt.tickEvent("scriptmanager.dup", undefined, { interactiveConsent: true });
+        const header = this.getSelectedHeader();
+        // Prompt for the new project nam_e
         const opts: core.PromptOptions = {
             header: lf("Choose a new name for your project"),
             agreeLbl: lf("Duplicate"),
@@ -202,24 +224,19 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             placeholder: lf("Enter your project name here"),
             size: "tiny"
         };
-        return core.promptAsync(opts).then(res => {
-            if (res === null)
-                return false; // null means cancelled
-            let id: string;
-            return workspace.duplicateAsync(header, res)
-                .then(clonedHeader => {
-                    id = this.getId(clonedHeader);
-                    return workspace.saveAsync(clonedHeader);
-                })
-                .then(() => {
-                    data.invalidate(`headers:${this.state.searchFor}`);
-                    this.setState({ selected: {}, markedNew: { [id]: 1 }, sortedBy: 'time', sortedAsc: false });
-                    setTimeout(() => {
-                        this.setState({ markedNew: {} });
-                    }, 5 * 1000);
-                    return true;
-                });
-        });
+        const newName = await core.promptAsync(opts);
+        if (newName === null)
+            return false; // null means cancelled
+        let id: string;
+        const clonedHeader = await workspace.duplicateAsync(header, newName);
+        id = this.getId(clonedHeader);
+        await workspace.saveAsync(clonedHeader);
+        data.invalidate(`headers:${this.state.searchFor}`);
+        this.setState({ selected: {}, markedNew: { [id]: 1 }, sortedBy: 'time', sortedAsc: false });
+        setTimeout(() => {
+            this.setState({ markedNew: {} });
+        }, 5 * 1000);
+        return true;
     }
 
     handleSwitchView() {
@@ -412,6 +429,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.setState({
             download: null
         });
+
     }
 
     handleDownloadProgressClose = () => {
@@ -505,12 +523,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
                         </sui.DropdownMenu>
                     </div>);
+                    headerActions.push(<sui.Button key="rename" icon="pencil" className="icon"
+                        text={lf("Rename")} textClass="landscape only" title={lf("Rename Project")} onClick={this.handleRename} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
-                if (numSelected > 1) {
+                if (numSelected > 1 && pxt.BrowserUtils.hasFileAccess()) {
                     headerActions.push(<sui.Button key="download-zip" icon="download" className="icon"
                         text={lf("Download Zip")} textClass="landscape only" title={lf("Download Zip")} onClick={this.handleDownloadAsync} />);
                 }

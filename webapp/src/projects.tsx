@@ -13,7 +13,11 @@ import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
 import { fireClickOnEnter } from "./util";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import IProjectView = pxt.editor.IProjectView;
+import ISettingsProps = pxt.editor.ISettingsProps;
+import UserInfo = pxt.editor.UserInfo;
+import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
+
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
@@ -87,7 +91,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
-        pxt.tickEvent("projects.header");
+        pxt.tickEvent("projects.header", { projectHeaderId: hdr?.id });
         core.showLoading("changeheader", lf("loading..."));
         this.props.parent.loadHeaderAsync(hdr)
             .catch(e => {
@@ -146,7 +150,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}
-                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
+                        onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
                     >
                         {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}
@@ -236,6 +240,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showFeedbackDialog = this.showFeedbackDialog.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -246,7 +251,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        this.hide();
         core.toggleHighContrast();
     }
 
@@ -275,6 +279,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
+    showFeedbackDialog() {
+        pxt.tickEvent("home.feedback");
+        this.props.parent.showFeedbackDialog("generic");
+    }
+
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         this.props.parent.signOutGithub();
@@ -289,11 +298,13 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
         // Targets with identity show github user on the profile screen.
-        const githubUser = !hasIdentity && this.getData("github:user") as pxt.editor.UserInfo;
+        const githubUser = !hasIdentity && this.getData("github:user") as UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
+        const showFeedbackOption = pxt.webConfig.ocvEnabled && targetTheme.feedbackEnabled && targetTheme.ocvFrameUrl && targetTheme.ocvAppId;
+        sendUpdateFeedbackTheme(highContrast);
 
-        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("Settings")} className="item icon more-dropdown-menuitem" ref={ref => this.dropdown = ref}>
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
             {githubUser && <div className="ui divider"></div>}
@@ -307,7 +318,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
-            {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
+            {showFeedbackOption ? <sui.Item role="menuitem" icon="comment" text={lf("Give Feedback")} onClick={this.showFeedbackDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }
@@ -614,19 +625,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         return headers;
     }
 
-    newProject(firstProject?: boolean) {
-        pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
-            this.props.parent.askForProjectCreationOptionsAsync()
-                .then(projectSettings => {
-                    const { name, languageRestriction } = projectSettings
-                    this.props.parent.newProject({ name, languageRestriction, firstProject });
-                })
-        } else {
-            this.props.parent.newProject({ firstProject });
-        }
-    }
-
     showScriptManager() {
         pxt.tickEvent("projects.showscriptmanager", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
@@ -757,7 +755,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const isFirstProject = (!headers || headers?.length == 0);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
-                    onClick={() => this.newProject(isFirstProject)} onKeyDown={fireClickOnEnter} >
+                    onClick={() => this.props.parent.newUserCreatedProject(isFirstProject)} onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
@@ -1176,7 +1174,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
         />
 }
 
-function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "projects" | "herobanner", scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
+function applyCodeCardAction(projectView: IProjectView, ticSrc: "projects" | "herobanner", scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
     let editor: string = (action && action.editor) || "blocks";
     if (editor == "js") editor = "ts";
     const url = action ? action.url : scr.url;
@@ -1202,7 +1200,7 @@ function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "proj
             });
             break;
         case "sharedExample":
-            console.log("shared example")
+            pxt.log("shared example")
             let id = pxt.github.normalizeRepoId(url) || pxt.Cloud.parseScriptId(url);
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));

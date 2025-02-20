@@ -12,7 +12,8 @@ import * as pkg from "./package";
 import * as projects from "./projects";
 import * as tutorial from "./tutorial";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+import ISettingsProps = pxt.editor.ISettingsProps;
+
 type HeaderBarView = "home" | "editor" | "tutorial" | "tutorial-tab" | "debugging" | "sandbox" | "time-machine";
 const LONGPRESS_DURATION = 750;
 
@@ -220,7 +221,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                             break;
                     }
                 } else {
-                    return <div className="ui item link editor-menuitem">
+                    return <div className="ui item link editor-menuitem" role="menuitem">
                         <container.EditorSelector parent={this.props.parent} sandbox={view === "sandbox"} python={targetTheme.python} languageRestriction={languageRestriction} headless={pxt.appTarget.simulator?.headless} />
                     </div>
                 }
