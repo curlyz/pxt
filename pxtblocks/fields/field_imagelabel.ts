@@ -19,7 +19,7 @@ namespace pxtblockly {
                 // `https://raw.githubusercontent.com/curlyz/codelab-esp-pngelement/master/png/${value}.png`,
                 // require(`file://../../_pngelement/codelab-esp-pngelement/png/${value}.png`),
                 // `/static/imagelabel/${value}.png`,
-                `/docs/static/imagelabel/${value}.png`,
+                `docs/static/imagelabel/${value}.png`,
                 // `https://learn.garastem.com/api/v1/assets/label/${value}`,
                 // 15 * value.length,
                 // 20,

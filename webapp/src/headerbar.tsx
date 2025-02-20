@@ -104,12 +104,33 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         if (view === "time-machine") {
             return <></>;
         }
-        return <div className="ui item logo organization">
-            {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                ? <img className={`ui logo ${view !== "home" ? "mobile hide" : ""}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
-                : <span className="name">{targetTheme.organization}</span>}
-            {targetTheme.organizationLogo && view !== "home" && (<img className={`ui image mobile only`} src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />)}
-        </div>
+        return (
+          <div
+            className="ui item logo organization"
+            onClick={this.brandIconClick}
+          >
+            {targetTheme.organizationWideLogo ||
+            targetTheme.organizationLogo ? (
+              <img
+                className={`ui logo ${view !== "home" ? "mobile hide" : ""}`}
+                src={
+                  targetTheme.organizationWideLogo ||
+                  targetTheme.organizationLogo
+                }
+                alt={lf("{0} Logo", targetTheme.organization)}
+              />
+            ) : (
+              <span className="name">{targetTheme.organization}</span>
+            )}
+            {targetTheme.organizationLogo && view !== "home" && (
+              <img
+                className={`ui image mobile only`}
+                src={targetTheme.organizationLogo}
+                alt={lf("{0} Logo", targetTheme.organization)}
+              />
+            )}
+          </div>
+        );
     }
 
     getTargetLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
@@ -117,14 +138,36 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             return <></>;
         }
         // TODO: "sandbox" view components are temporary share page layout
-        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" className={`ui item logo brand ${view !== "sandbox" && view !== "home" ? "mobile hide" : ""}`} onClick={this.brandIconClick}>
-            {targetTheme.useTextLogo
-            ? [ <span className="name" key="org-name">{targetTheme.organizationText}</span>,
-                <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span> ]
-            : (targetTheme.logo || targetTheme.portraitLogo
-                ? <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
-                : <span className="name">{targetTheme.boardName}</span>)}
-        </div>
+        return (
+          <div
+            aria-label={lf("{0} Logo", targetTheme.boardName)}
+            role="menuitem"
+            className={`ui item logo brand ${
+              view !== "sandbox" && view !== "home" ? "mobile fhide" : ""
+            }`}
+            onClick={this.brandIconClick}
+          >
+            {targetTheme.useTextLogo ? (
+              [
+                <span className="name" key="org-name">
+                  {targetTheme.organizationText}
+                </span>,
+                <span className="name-short" key="org-name-short">
+                  {targetTheme.organizationShortText ||
+                    targetTheme.organizationText}
+                </span>,
+              ]
+            ) : targetTheme.logo || targetTheme.portraitLogo ? (
+              <img
+                className={`ui ${targetTheme.logoWide ? "small" : ""} logo`}
+                src={targetTheme.logo || targetTheme.portraitLogo}
+                alt={lf("{0} Logo", targetTheme.boardName)}
+              />
+            ) : (
+              <span className="name">{targetTheme.boardName}</span>
+            )}
+          </div>
+        );
     }
 
     getCenterLabel(targetTheme: pxt.AppTheme, view: HeaderBarView, tutorialOptions?: pxt.tutorial.TutorialOptions) {

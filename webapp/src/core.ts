@@ -44,8 +44,11 @@ const textDiffCreate = require('textdiff-create')
 const textDiffPatch = require('textdiff-patch')
 const idb = require('idb')
 var msgpack = require('msgpack5')()
-
-
+var capacitorBluetoothLE = require('@capacitor-community/bluetooth-le')
+var qrcodejs = require('qrcodejs')
+var avrbro = require('avrbro');
+var stk500 = require('stk500');
+var avrgirl = require('avrgirl-arduino');
 export function getAVRBro() {
 
     return {
@@ -54,6 +57,11 @@ export function getAVRBro() {
         textDiffCreate,
         textDiffPatch,
         idb,
+        capacitorBluetoothLE,
+        qrcodejs,
+        avrbro,
+        stk500,
+        avrgirl,
     };
 }
 
